@@ -11,12 +11,13 @@ class BaseCrawler(object):
                     "tbl", "tbs", "tbsp", "gill", "ml", "g", "gram", "clove", "sprig", "lb", "kg", "kilogram", "cm", "centimeter",
                     "inch", "bunch", "sachet", "tin", "can", "litre", "jar", "sheet", "handfull", "splash", "dash", "scoop", "stick",
                     "handful", "few", "slice", "knob", "head", "pinch", "bulb", "wineglass", "generous", "tablespooons",
-                    "block", "swig", "teaspooon", "drop", "rasher", "glass", "tesapoon", "stalk", "packet", "juice"]
+                    "block", "swig", "teaspooon", "drop", "rasher", "glass", "tesapoon", "stalk", "packet", "juice",
+                    "bottle", "zest", "about"]
     DESCRIPTION_DICT = ["free range", "large", "heaped", "skinless", "boneless", "fresh", "low salt", "reduced sodium", "piece",
                     "of", "heaping", "level", "seasonal", "ripe", "mixed colour", "freshly", "quality",
                     "mixed", "colour", "color", "unsalted", "higher-welfare", "shelled", "an", "small", "medium", "tenderstem", "organic", "fine",
                     "thinly", "sliced", "other", "higher welfare", "thick", "thin", "long", "jarred", "good", "fat free", "good quality",
-                    "corn-fed", "big", "low-fat"]
+                    "corn fed", "big", "low fat", "thick cut", "chopped", "country style", "grated"]
 
     def __init__(self):
         self.session = HTMLSession()
@@ -30,12 +31,8 @@ class BaseCrawler(object):
     def request_link(self, link):
         try:
             resp = self.session.get(link)
-            while resp.status_code == 403:
-                time.sleep(1)
-
-            resp = self.session.get(link)
-        except RemoteDisconnected:
-            pass
+        except:
+            return
 
         return resp
 
@@ -55,7 +52,12 @@ class BaseCrawler(object):
             return True
 
         is_amount = len(word) == 1 or re.search('.*\d+', word) is not None
-        singular_word = plural_eng.singular_noun(word)
+
+        try:
+            singular_word = plural_eng.singular_noun(word)
+        except:
+            return True
+
         is_measurment = word in  self.MEASUEMENT_UNITS or (singular_word and singular_word in  self.MEASUEMENT_UNITS)
         is_description = word in  self.DESCRIPTION_DICT or (singular_word and singular_word in  self.DESCRIPTION_DICT)
 
@@ -66,9 +68,9 @@ class BaseCrawler(object):
         '''
         This utility receives an ingredient text from a recipe, and extracts the ingredient's name
         '''
-        ing_txt = ingredient.text
+        ing_txt = ingredient
 
-        # If the entire text is uupercase, it means it is a name of a part of the recipe, 
+        # If the entire text is uppercase, it means it is a name of a part of the recipe, 
         # and not an ingredient
         if ing_txt.isupper():
             ing_txt = None
@@ -87,10 +89,6 @@ class BaseCrawler(object):
             if  or_idx != -1:
                 ing_txt = ing_txt[or_idx+4:]
             
-            and_idx = ing_txt.find(" and ")
-            if and_idx != -1:
-                ing_txt = ing_txt[and_idx + 4:]
-
             # Removing all quantitive, measurment, etc. words    
             first_part = ing_txt.split(' ', 1)[0]
 

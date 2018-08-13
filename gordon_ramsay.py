@@ -3,7 +3,7 @@ from base_crawler import BaseCrawler
 
 
 class GordonRamsayCrawler(BaseCrawler):
-    page_path = "/gr/recipes/"
+    page_path = "gr/recipes/"
     base_url = f"https://www.gordonramsay.com"
     recipe_count = 0
 
@@ -12,10 +12,18 @@ class GordonRamsayCrawler(BaseCrawler):
         ingredients_list = []
 
         for ingredient in recipe.html.find('ul.recipe-division > li'):
-            ing_name = self.handle_ingredient(ingredient)
+            ing_txt = ingredient.text.lower() 
+            
+            if "salt" in ing_txt and "and" in ing_txt and "pepper" in ing_txt:
+                ing_parts = ing_txt.split("and")
+            else:
+                ing_parts = [ing_txt]
 
-            if ing_name:
-                ingredients_list.append(ing_name)   
+            for ing in ing_parts:
+                ing_name = self.handle_ingredient(ing)
+
+                if ing_name:
+                    ingredients_list.append(ing_name)   
 
         self.recipe_count +=1
         print("Recipe Link: ", link)
@@ -34,15 +42,14 @@ class GordonRamsayCrawler(BaseCrawler):
 
 
     def crawl_site(self):
-        resp = self.request_link(''.join([self.base_url, self.page_path]))
-        self.crawl_page(resp)
-        next_page_path = resp.html.find('a.load-more-link', first=True).attrs.get('href')
-        print(next_page_path)
+        while self.page_path is not None and self.recipe_count < 96:
+            resp = self.request_link('/'.join([self.base_url, self.page_path]))     
+            self.crawl_page(resp)   
+            load_more = resp.html.find('a.load-more-link', first=True)
 
-        while next_page_path != self.page_path and self.recipe_count < 50:
-            resp = self.request_link(self.base_url)
-            self.crawl_page(resp)
-            print(self.recipe_count)
-            self.page_path = next_page_path
+            if not load_more:
+                self.page_path = None
+            else:
+                self.page_path = load_more.attrs.get('href')
 
         print('finished crawler:', self.recipe_count)

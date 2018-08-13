@@ -12,14 +12,24 @@ class JamieOliverScraper(BaseCrawler):
             recipe's categories(Italian, dinner, etc.) and the recipe's ingredients
         '''
         recipe_resp = self.request_link(self.base_url + link)
-        recipe_resp.html.render()
+        try:
+            recipe_resp.html.render()
+        except:
+            return
+
         recipe_title = recipe_resp.html.find('h1', first=True).text
 
         while recipe_title == "403 Forbidden":
-            time.sleep(2)
+            time.sleep(5)
             recipe_resp = self.request_link(self.base_url + link)
-            recipe_resp.html.render()
-            recipe_title = recipe_resp.html.find('h1', first=True).text
+
+            try:
+                recipe_resp.html.render()
+                recipe_title = recipe_resp.html.find('h1', first=True).text
+            except:
+                time.sleep(3)
+
+            
             
         blacklisted_categories = ["book", "jamie cooks italy", "jamie magazine"]
         recipe_tags = []
@@ -44,7 +54,7 @@ class JamieOliverScraper(BaseCrawler):
         ingredients_list = []
 
         for ingredient in ingredients_html:
-            ing_name = self.handle_ingredient(ingredient)
+            ing_name = self.handle_ingredient(ingredient.text)
 
             if ing_name:
                 ingredients_list.append(ing_name)
@@ -59,7 +69,11 @@ class JamieOliverScraper(BaseCrawler):
 
     def crawl_category_page(self, link):
         resp = self.request_link(self.base_url + link)
-        resp.html.render(wait=1, scrolldown=True)
+        try:
+            resp.html.render(wait=1, scrolldown=True)
+        except:
+            time.sleep(3)
+            return
         
         for recipe_block in resp.html.find('.recipe-block > a'):
             recipe_link = recipe_block.attrs.get('href', None)
@@ -70,6 +84,11 @@ class JamieOliverScraper(BaseCrawler):
                         
     def crawl_site(self):
         resp = self.request_link(self.base_course_url)
+
+        while not resp:
+            time.sleep(5)
+            resp = self.request_link(self.base_course_url)
+
         links = list(filter(lambda x: x.startswith('/recipes/category/course/'), resp.html.links))
 
         for link in links[:3]:
