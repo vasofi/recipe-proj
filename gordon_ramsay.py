@@ -25,9 +25,7 @@ class GordonRamsayCrawler(BaseCrawler):
                 if ing_name:
                     ingredients_list.append(ing_name)   
 
-        self.recipe_count +=1
-        print("Recipe Link: ", link)
-        print("Ingredients: ", ingredients_list) 
+        return ingredients_list
                 
     def crawl_page(self, response):
         recipe_items = response.html.find('.item.recipe') 
@@ -35,11 +33,9 @@ class GordonRamsayCrawler(BaseCrawler):
         for item in recipe_items:
             recipe_title = item.find('h2', first=True).text
             recipe_categories = [x.text for x in item.find('ul.categories > li')]
-            print("---------NEW RECIPE---------")
-            print("Recipe Name: ", recipe_title)
-            print("Recipe Categories: ", ', '.join(recipe_categories))
-            self.crawl_recipe(''.join([self.base_url, item.find('a', first=True).attrs.get('href')]))
-
+            recipe_link = ''.join([self.base_url, item.find('a', first=True).attrs.get('href')])
+            ingredients_list = self.crawl_recipe(recipe_link)
+            print(', '.join([recipe_link, recipe_title, '|'.join(recipe_categories), '|'.join(ingredients_list)]))
 
     def crawl_site(self):
         while self.page_path is not None and self.recipe_count < 96:
@@ -51,5 +47,3 @@ class GordonRamsayCrawler(BaseCrawler):
                 self.page_path = None
             else:
                 self.page_path = load_more.attrs.get('href')
-
-        print('finished crawler:', self.recipe_count)

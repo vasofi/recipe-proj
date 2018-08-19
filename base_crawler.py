@@ -12,12 +12,12 @@ class BaseCrawler(object):
                     "inch", "bunch", "sachet", "tin", "can", "litre", "jar", "sheet", "handfull", "splash", "dash", "scoop", "stick",
                     "handful", "few", "slice", "knob", "head", "pinch", "bulb", "wineglass", "generous", "tablespooons",
                     "block", "swig", "teaspooon", "drop", "rasher", "glass", "tesapoon", "stalk", "packet", "juice",
-                    "bottle", "zest", "about"]
+                    "bottle", "zest", "about", "drizzle"]
     DESCRIPTION_DICT = ["free range", "large", "heaped", "skinless", "boneless", "fresh", "low salt", "reduced sodium", "piece",
                     "of", "heaping", "level", "seasonal", "ripe", "mixed colour", "freshly", "quality",
                     "mixed", "colour", "color", "unsalted", "higher-welfare", "shelled", "an", "small", "medium", "tenderstem", "organic", "fine",
                     "thinly", "sliced", "other", "higher welfare", "thick", "thin", "long", "jarred", "good", "fat free", "good quality",
-                    "corn fed", "big", "low fat", "thick cut", "chopped", "country style", "grated"]
+                    "corn fed", "big", "low fat", "thick cut", "chopped", "country style", "grated", "mixture   "]
 
     def __init__(self):
         self.session = HTMLSession()

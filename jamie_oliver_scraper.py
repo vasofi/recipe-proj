@@ -27,9 +27,7 @@ class JamieOliverScraper(BaseCrawler):
                 recipe_resp.html.render()
                 recipe_title = recipe_resp.html.find('h1', first=True).text
             except:
-                time.sleep(3)
-
-            
+                time.sleep(3)          
             
         blacklisted_categories = ["book", "jamie cooks italy", "jamie magazine"]
         recipe_tags = []
@@ -61,12 +59,8 @@ class JamieOliverScraper(BaseCrawler):
 
         if ingredients_list:
             self.recipe_count += 1
-            print('-----------------------------NEW RECIPE-----------------------------')
-            print("Recipe Link: ", link)
-            print("Recipe name: ", recipe_title)
-            print("Recipe categories: ", ', '.join(recipe_tags))
-            print("Ingredients: ", ingredients_list)
-
+            print(', '.join([self.base_url + link, recipe_title, '|'.join(recipe_tags), '|'.join(ingredients_list)]))
+            
     def crawl_category_page(self, link):
         resp = self.request_link(self.base_url + link)
         try:
@@ -93,5 +87,3 @@ class JamieOliverScraper(BaseCrawler):
 
         for link in links[:3]:
             self.crawl_category_page(link) 
-
-        print('finished crawler:', self.recipe_count)
