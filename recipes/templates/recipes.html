@@ -1,0 +1,101 @@
+{% load static %}
+
+<html>
+	<head>
+		<title>Find Your Recipe</title>
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+		<link rel="stylesheet" href="{% static "recipes/jquery.dropdown.css"%}">
+		<script src="{% static "recipes/jquery.dropdown.js" %}"></script>
+		<style>
+			.space-top {
+				margin-top: 30px;
+			}
+			
+			select.form-control.categories {
+				height: 120px;
+			}
+			
+			.results {
+				display: none;
+			}
+		</style>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				$('.ingredients').dropdown({
+					multipleMode: 'label',
+					limitCount: Infinity,
+					readOnly: false,
+					input: '<input type="text" maxLength="20" placeholder="Search">',
+					searchable: true,
+					searchNoData: '<li style="color:#ddd">No Results</li>',
+					choice: function () {}, 
+				});
+				
+				$('button').click(function() {
+					var categories_list = [];
+					
+			        $.each($(".categories > option:selected"), function(){            
+						var category_id = $(this).val();
+						console.log(category_id);
+						categories_list.push(category_id);
+			        });
+					
+			        var ingredients = [];
+				        
+			        $.each($("#selected-ingredients > option:selected"), function(){            
+						var ingredient_id = $(this).val();
+						ingredients.push(ingredient_id);
+			        });
+			        
+			        if (ingredients.length === 0) {
+			        	alert("Please choose at least one ingredient");
+			        }
+			        else {
+			        	url = 'http://localhost:8000/get-recipe/?ingredients=' + ingredients.join();
+
+			        	if (categories_list.length > 0) {
+			        		url += '&categories=' + categories_list.join();
+			        	}
+
+			        	window.location = url;
+			        } 
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<div class="container">
+			<h1 class="space-top text-center">Find Your Recipe!</h1>
+			<div class="row">
+				<div class="col-md-10 form-group">
+					<label for="">Choose Categories:
+					<h5>You can leave it blank to get all categories</h5></label>
+					<select multiple class="form-control categories" id="categories">
+						{% for curr_category in categories %}
+							{{curr_category}}
+							<option value={{curr_category.id}}>{{curr_category.name}}</option>
+						{% endfor %}
+					</select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-10">
+					<label for="">Choose your ingredients:</label>
+					<div class="ingredients">
+	  					<select style="display:none"  id="selected-ingredients" multiple>
+	  						{% for ingredient in ingredients %}
+	  							<option value={{ingredient.value}}>{{ingredient.text}}</option>
+	  						{% endfor %}
+	  					</select>
+  					</div>
+				</div>
+			</div>		
+			<div class="space-top center-block">
+				<button class="btn btn-primary btn-small">Search</button>
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,12 +1,13 @@
-import time 
 from requests_html import HTMLSession
 import re 
 import inflect
-from http.client import RemoteDisconnected
+from recipes.models import Ingredient, Category, Recipe, RecipeCategory,\
+    RecipeIngredient
+
 
 class BaseCrawler(object):
     base_url = ""
-    session = None
+    plural_eng = None
     MEASUEMENT_UNITS = ["cup", "c", "ounce", "fluid ounce", "oz", "fl oz", "teaspoon", "t", "tsp", "tablespoon", 
                     "tbl", "tbs", "tbsp", "gill", "ml", "g", "gram", "clove", "sprig", "lb", "kg", "kilogram", "cm", "centimeter",
                     "inch", "bunch", "sachet", "tin", "can", "litre", "jar", "sheet", "handfull", "splash", "dash", "scoop", "stick",
@@ -20,8 +21,8 @@ class BaseCrawler(object):
                     "corn fed", "big", "low fat", "thick cut", "chopped", "country style", "grated", "mixture   "]
 
     def __init__(self):
-        self.session = HTMLSession()
-
+        self.plural_eng = inflect.engine()
+        
     def crawl_site(self):
         raise NotImplementedError()
 
@@ -30,10 +31,16 @@ class BaseCrawler(object):
 
     def request_link(self, link):
         try:
-            resp = self.session.get(link)
+            session = HTMLSession()
+            session.close()
+            resp = session.get(link)
         except:
-            return
-
+            resp = None
+        finally:
+            print("closing a session")
+            session.close()
+            del session
+            
         return resp
 
     def is_ingredient_description(self, word):
@@ -44,7 +51,6 @@ class BaseCrawler(object):
             or if the word appears in the measurment units dictionary.
             The utility takes care of plurals as well.
         '''
-        plural_eng = inflect.engine()
         word = word.lower().strip().strip(',').replace('-', ' ')
 
         # If the string is empty after the changes, it is not part of the ingredient
@@ -54,7 +60,7 @@ class BaseCrawler(object):
         is_amount = len(word) == 1 or re.search('.*\d+', word) is not None
 
         try:
-            singular_word = plural_eng.singular_noun(word)
+            singular_word = self.plural_eng.singular_noun(word)
         except:
             return True
 
@@ -113,3 +119,30 @@ class BaseCrawler(object):
                 comma_idx = ing_txt.find(',')
 
         return ing_txt 
+
+    def create_recipe(self, name, url, ingredients_name_list, categories_names_list):
+        # Creating the recipe in the database. We don't create the recipe if a recipe with this link exists already in the DB
+        recipe, created = Recipe.objects.get_or_create(url=url, defaults={"name": name})
+        
+        # Handling a new recipe
+        if created:
+            recipe_categories_list = []
+        
+            # Creating the new categories
+            for category in categories_names_list:
+                category, _ = Category.objects.get_or_create(name=category.lower().strip())
+                recipe_categories_list.append(RecipeCategory(recipe=recipe, category=category))
+            
+            RecipeCategory.objects.bulk_create(recipe_categories_list)
+
+            recipe_ingredients_list = []
+            
+            # Creting the new ingredients
+            for ing_name in ingredients_name_list:
+                singular_ing = self.plural_eng.singular_noun(ing_name.lower().strip())
+                name = singular_ing or ing_name.lower().strip()
+                ingredient, _ = Ingredient.objects.get_or_create(name=name)
+                recipe_ingredients_list.append(RecipeIngredient(recipe=recipe, ingredient=ingredient))
+                
+            # Updating the ingredients and categories of the recipe
+            RecipeIngredient.objects.bulk_create(recipe_ingredients_list)

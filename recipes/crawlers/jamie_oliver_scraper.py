@@ -1,5 +1,7 @@
-from base_crawler import BaseCrawler
 import time
+from recipes.crawlers.base_crawlers import BaseCrawler
+from recipes.models import Recipe, Ingredient, RecipeIngredient, Category
+
 
 class JamieOliverScraper(BaseCrawler):
     base_url = "https://www.jamieoliver.com"
@@ -59,7 +61,8 @@ class JamieOliverScraper(BaseCrawler):
 
         if ingredients_list:
             self.recipe_count += 1
-            print(', '.join([self.base_url + link, recipe_title, '|'.join(recipe_tags), '|'.join(ingredients_list)]))
+            self.create_recipe(recipe_title, self.base_url + link, ingredients_list, recipe_tags)
+            print(', '.join([self.base_url + link, recipe_title.replace(",", " "), '|'.join(recipe_tags), '|'.join(ingredients_list)]))
             
     def crawl_category_page(self, link):
         resp = self.request_link(self.base_url + link)
@@ -85,5 +88,5 @@ class JamieOliverScraper(BaseCrawler):
 
         links = list(filter(lambda x: x.startswith('/recipes/category/course/'), resp.html.links))
 
-        for link in links[:3]:
+        for link in links[:10]:
             self.crawl_category_page(link) 
