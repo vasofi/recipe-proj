@@ -38,7 +38,7 @@ class FindRecipeView(TemplateView):
         recipes_basic_fiter =  Recipe.objects.annotate(total_ing_num=Count("ingredients__ingredient_id"),
                                                        searched_ing_num=Count(Case(
                                                                         When(ingredients__ingredient_id__in=ingredients, then=1)))).\
-                                            filter(searched_ing_num=len(ingredients))
+                                            filter(searched_ing_num__lte=len(ingredients), searched_ing_num__gt=0)
         all_ingredient_recipes = recipes_basic_fiter.filter(total_ing_num=F("searched_ing_num"))
         one_missing_recipes = recipes_basic_fiter.filter(total_ing_num=(F("searched_ing_num") + 1))
         two_missing_recipes = recipes_basic_fiter.filter(total_ing_num=(F("searched_ing_num") + 2))

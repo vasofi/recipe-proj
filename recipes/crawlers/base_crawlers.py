@@ -8,6 +8,7 @@ from recipes.models import Ingredient, Category, Recipe, RecipeCategory,\
 class BaseCrawler(object):
     base_url = ""
     plural_eng = None
+    session = None
     MEASUEMENT_UNITS = ["cup", "c", "ounce", "fluid ounce", "oz", "fl oz", "teaspoon", "t", "tsp", "tablespoon", 
                     "tbl", "tbs", "tbsp", "gill", "ml", "g", "gram", "clove", "sprig", "lb", "kg", "kilogram", "cm", "centimeter",
                     "inch", "bunch", "sachet", "tin", "can", "litre", "jar", "sheet", "handfull", "splash", "dash", "scoop", "stick",
@@ -22,6 +23,7 @@ class BaseCrawler(object):
 
     def __init__(self):
         self.plural_eng = inflect.engine()
+        self.session = HTMLSession()
         
     def crawl_site(self):
         raise NotImplementedError()
@@ -31,15 +33,13 @@ class BaseCrawler(object):
 
     def request_link(self, link):
         try:
-            session = HTMLSession()
-            session.close()
-            resp = session.get(link)
+            self.session.close()
+            print(f"requesting the link {link}")
+            resp = self.session.get(link)
+            print("recieved response")
         except:
             resp = None
-        finally:
-            print("closing a session")
-            session.close()
-            del session
+            self.session.close()
             
         return resp
 

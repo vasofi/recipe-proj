@@ -14,63 +14,79 @@ class JamieOliverScraper(BaseCrawler):
             recipe's categories(Italian, dinner, etc.) and the recipe's ingredients
         '''
         recipe_resp = self.request_link(self.base_url + link)
-        try:
-            recipe_resp.html.render()
-        except:
+        
+#         try:
+#             print("rendering html")
+#             print(recipe_resp.html)
+#             recipe_resp.html.render()
+#         except:
+#             return
+
+        if not recipe_resp or not recipe_resp.html :
             return
-
-        recipe_title = recipe_resp.html.find('h1', first=True).text
-
-        while recipe_title == "403 Forbidden":
-            time.sleep(5)
-            recipe_resp = self.request_link(self.base_url + link)
-
-            try:
-                recipe_resp.html.render()
-                recipe_title = recipe_resp.html.find('h1', first=True).text
-            except:
-                time.sleep(3)          
+        
+        if recipe_resp.html.find('h1', first=True):
+            recipe_title = recipe_resp.html.find('h1', first=True).text 
+            print(f"title: {recipe_title}")
+    
+            for x in range(0, 5):        
+                if recipe_title != "403 Forbidden":
+                    break
+                
+                time.sleep(5)
+                recipe_resp = self.request_link(self.base_url + link)
+    
+                try:
+                #    recipe_resp.html.render()
+                    recipe_title = recipe_resp.html.find('h1', first=True).text
+                    print(f"title: {recipe_title}")
+                except:
+                    time.sleep(3)          
             
-        blacklisted_categories = ["book", "jamie cooks italy", "jamie magazine"]
-        recipe_tags = []
-        
-        for tag in recipe_resp.html.find('.tags-list > a'):
-            category = tag.text
-
-            if category:
-                category = category.strip().strip(',')
-
-                if category.lower() not in blacklisted_categories:
-                    recipe_tags.append(category)
-        
-        # Checking if the page has duplicate ingredients list
-        metric_ingred_list = recipe_resp.html.find('ul.ingred-list.metric')
-
-        if metric_ingred_list:
-            ingredients_html = recipe_resp.html.find('ul.ingred-list.metric > li')
-        else:
-            ingredients_html = recipe_resp.html.find('ul.ingred-list > li')
-        
-        ingredients_list = []
-
-        for ingredient in ingredients_html:
-            ing_name = self.handle_ingredient(ingredient.text)
-
-            if ing_name:
-                ingredients_list.append(ing_name)
-
-        if ingredients_list:
-            self.recipe_count += 1
-            self.create_recipe(recipe_title, self.base_url + link, ingredients_list, recipe_tags)
-            print(', '.join([self.base_url + link, recipe_title.replace(",", " "), '|'.join(recipe_tags), '|'.join(ingredients_list)]))
+            if recipe_title == "403 Forbidden":
+                return
+                
+            blacklisted_categories = ["book", "jamie cooks italy", "jamie magazine"]
+            recipe_tags = []
+            
+            for tag in recipe_resp.html.find('.tags-list > a'):
+                category = tag.text
+    
+                if category:
+                    category = category.strip().strip(',')
+    
+                    if category.lower() not in blacklisted_categories:
+                        recipe_tags.append(category)
+            
+            # Checking if the page has duplicate ingredients list
+            metric_ingred_list = recipe_resp.html.find('ul.ingred-list.metric')
+    
+            if metric_ingred_list:
+                ingredients_html = recipe_resp.html.find('ul.ingred-list.metric > li')
+            else:
+                ingredients_html = recipe_resp.html.find('ul.ingred-list > li')
+            
+            ingredients_list = []
+    
+            for ingredient in ingredients_html:
+                ing_name = self.handle_ingredient(ingredient.text)
+    
+                if ing_name:
+                    ingredients_list.append(ing_name)
+    
+            if ingredients_list:
+                self.recipe_count += 1
+                self.create_recipe(recipe_title, self.base_url + link, ingredients_list, recipe_tags)
+                print(', '.join([self.base_url + link, recipe_title.replace(",", " "), '|'.join(recipe_tags), '|'.join(ingredients_list)]))
             
     def crawl_category_page(self, link):
         resp = self.request_link(self.base_url + link)
-        try:
-            resp.html.render(wait=1, scrolldown=True)
-        except:
-            time.sleep(3)
-            return
+       
+#         try:
+#             resp.html.render(wait=1, scrolldown=True)
+#         except:
+#             time.sleep(3)
+#             return
         
         for recipe_block in resp.html.find('.recipe-block > a'):
             recipe_link = recipe_block.attrs.get('href', None)
@@ -88,5 +104,5 @@ class JamieOliverScraper(BaseCrawler):
 
         links = list(filter(lambda x: x.startswith('/recipes/category/course/'), resp.html.links))
 
-        for link in links[:10]:
+        for link in links:
             self.crawl_category_page(link) 

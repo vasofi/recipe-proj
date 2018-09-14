@@ -38,7 +38,7 @@ class GordonRamsayCrawler(BaseCrawler):
             print(', '.join([recipe_link, recipe_title.replace(",", " "), '|'.join(recipe_categories), '|'.join(ingredients_list)]))
 
     def crawl_site(self):
-        while self.page_path is not None and self.recipe_count < 200:
+        while self.page_path is not None and self.recipe_count < 500:
             resp = self.request_link('/'.join([self.base_url, self.page_path]))     
             self.crawl_page(resp)   
             load_more = resp.html.find('a.load-more-link', first=True)
