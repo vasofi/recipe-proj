@@ -14,13 +14,6 @@ class JamieOliverScraper(BaseCrawler):
             recipe's categories(Italian, dinner, etc.) and the recipe's ingredients
         '''
         recipe_resp = self.request_link(self.base_url + link)
-        
-#         try:
-#             print("rendering html")
-#             print(recipe_resp.html)
-#             recipe_resp.html.render()
-#         except:
-#             return
 
         if not recipe_resp or not recipe_resp.html :
             return
@@ -37,7 +30,6 @@ class JamieOliverScraper(BaseCrawler):
                 recipe_resp = self.request_link(self.base_url + link)
     
                 try:
-                #    recipe_resp.html.render()
                     recipe_title = recipe_resp.html.find('h1', first=True).text
                     print(f"title: {recipe_title}")
                 except:
@@ -82,12 +74,6 @@ class JamieOliverScraper(BaseCrawler):
     def crawl_category_page(self, link):
         resp = self.request_link(self.base_url + link)
        
-#         try:
-#             resp.html.render(wait=1, scrolldown=True)
-#         except:
-#             time.sleep(3)
-#             return
-        
         for recipe_block in resp.html.find('.recipe-block > a'):
             recipe_link = recipe_block.attrs.get('href', None)
 
